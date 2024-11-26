@@ -1,8 +1,15 @@
 #!/bin/bash
 
+# بررسی اینکه آیا اسکریپت اجرایی است
+if [ ! -x "$0" ]; then
+  echo "در حال اعمال دسترسی اجرایی به اسکریپت..."
+  chmod +x "$0"
+  echo "اسکریپت دوباره اجرا می‌شود..."
+  exec "$0"
+fi
+
 # رنگ‌ها برای نمایش
 GREEN='\033[0;32m'
-RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${GREEN}شروع نصب Hysteria2...${NC}"
@@ -10,6 +17,17 @@ echo -e "${GREEN}شروع نصب Hysteria2...${NC}"
 # به‌روزرسانی و نصب ابزارهای اولیه
 sudo apt update -y && sudo apt upgrade -y
 sudo apt install curl wget -y
+
+# گرفتن ورودی پورت از کاربر
+read -p "لطفاً پورت سرور را وارد کنید (پیش‌فرض: 443): " PORT
+PORT=${PORT:-443} # اگر کاربر چیزی وارد نکرد، مقدار پیش‌فرض 443 استفاده شود
+
+# گرفتن رمز عبور از کاربر
+read -p "لطفاً رمز عبور را وارد کنید: " PASSWORD
+if [ -z "$PASSWORD" ]; then
+  echo "رمز عبور نمی‌تواند خالی باشد. لطفاً دوباره اجرا کنید."
+  exit 1
+fi
 
 # دانلود فایل باینری Hysteria2
 echo -e "${GREEN}دانلود فایل Hysteria2...${NC}"
@@ -27,14 +45,14 @@ echo -e "${GREEN}ایجاد فایل تنظیمات...${NC}"
 sudo mkdir -p /etc/hysteria
 cat <<EOF | sudo tee /etc/hysteria/config.json
 {
-  "listen": ":443",
+  "listen": ":$PORT",
   "protocol": "udp",
   "cert": "/etc/hysteria/cert.pem",
   "key": "/etc/hysteria/key.pem",
   "auth": {
     "mode": "password",
     "config": {
-      "password": ["YOUR_PASSWORD"]
+      "password": ["$PASSWORD"]
     }
   }
 }
@@ -68,3 +86,5 @@ sudo systemctl enable hysteria
 sudo systemctl start hysteria
 
 echo -e "${GREEN}Hysteria2 با موفقیت نصب و راه‌اندازی شد!${NC}"
+echo -e "${GREEN}پورت: $PORT${NC}"
+echo -e "${GREEN}رمز عبور: $PASSWORD${NC}"
